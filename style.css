@@ -1,0 +1,560 @@
+/* ======================================================
+   HOMENAGEM ROMÂNTICA — VISUAL ESTILO SPOTIFY PREMIUM
+   (apenas visual — a lógica permanece no script.js)
+   ====================================================== */
+
+:root {
+  --bg:            #121212;
+  --bg-elev:       #181818;
+  --green:         #1db954;
+  --green-bright:  #1ed760;
+  --white:         #ffffff;
+  --text-strong:   #ffffff;
+  --text-soft:     #b3b3b3;
+  --text-dim:      #6f6f6f;
+  --glass:         rgba(255, 255, 255, 0.05);
+  --glass-border:  rgba(255, 255, 255, 0.08);
+  --radius:        24px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  background: var(--bg);
+  scroll-behavior: smooth;
+  scroll-snap-type: y proximity;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text-strong);
+  line-height: 1.5;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ======================================================
+   FUNDO COM BLUR DINÂMICO (cores da capa)
+   ====================================================== */
+.bg-glow {
+  position: fixed;
+  inset: -20%;
+  z-index: -2;
+  filter: blur(90px) saturate(140%);
+  opacity: 0.55;
+  pointer-events: none;
+  will-change: transform;
+}
+.bg-glow::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(18,18,18,0.35) 0%, rgba(18,18,18,0.85) 55%, var(--bg) 100%);
+  pointer-events: none;
+}
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  display: block;
+}
+.orb-1 { width: 60vw; height: 60vw; top: -8%;   left: -10%; background: #1db954; opacity: 0.5; }
+.orb-2 { width: 55vw; height: 55vw; top: 22%;    right: -15%; background: #b5179e; opacity: 0.35; }
+.orb-3 { width: 50vw; height: 50vw; bottom: -8%; left: 12%;  background: #3a86ff; opacity: 0.30; }
+
+/* ======================================================
+   ESTRUTURA / SEÇÕES
+   ====================================================== */
+main { width: 100%; }
+
+.section {
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 20px;
+  scroll-snap-align: start;
+  position: relative;
+}
+
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+}
+
+/* ======================================================
+   SEÇÃO 1 — PLAYER "TOCANDO AGORA"
+   ====================================================== */
+.now-playing {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* Topo estilo Spotify */
+.np-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.np-icon-btn {
+  background: none;
+  border: none;
+  color: var(--white);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.np-icon-btn:hover { background: rgba(255,255,255,0.08); transform: scale(1.05); }
+.np-topbar-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+  min-width: 0;
+}
+.np-topbar-label {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--text-soft);
+  font-weight: 600;
+}
+.np-topbar-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--white);
+}
+
+/* Palco capa/mensagens */
+.stage {
+  position: relative;
+  width: 72%;
+  aspect-ratio: 1 / 1;
+  margin: 8px auto 4px;
+}
+.cover-wrap {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  transition: opacity 0.8s ease, transform 0.8s ease, filter 0.8s ease;
+}
+.cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.cover-wrap.hidden-cover {
+  opacity: 0;
+  transform: scale(1.06);
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+/* Mensagens românticas no lugar da capa */
+.messages {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  border-radius: 12px;
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+.messages.active { opacity: 1; }
+.message-text {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--white);
+  line-height: 1.5;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.9s ease, transform 0.9s ease;
+  text-wrap: balance;
+}
+.message-text.show { opacity: 1; transform: translateY(0); }
+
+/* Infos da música */
+.track-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 4px;
+}
+.track-info-text { min-width: 0; }
+.track-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.track-artist {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-soft);
+  margin-top: 2px;
+}
+.np-heart-btn {
+  background: none;
+  border: none;
+  color: var(--green-bright);
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  transition: transform 0.2s ease;
+}
+.np-heart-btn:hover { transform: scale(1.12); }
+
+/* Barra de progresso estilo Spotify */
+.progress-row { display: flex; flex-direction: column; gap: 8px; }
+.progress {
+  position: relative;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+}
+.progress-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 0%;
+  background: var(--white);
+  border-radius: 999px;
+}
+.progress-knob {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  width: 12px;
+  height: 12px;
+  background: var(--white);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.progress:hover .progress-knob { opacity: 1; }
+.progress:hover .progress-fill { background: var(--green-bright); }
+.progress-times {
+  display: flex;
+  justify-content: space-between;
+}
+.time {
+  font-size: 0.72rem;
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Controles principais */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+}
+.np-ctrl {
+  background: none;
+  border: none;
+  color: var(--white);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+.np-ctrl:hover { transform: scale(1.1); }
+.np-ctrl-sm { color: var(--text-soft); }
+.np-ctrl-sm:hover { color: var(--white); }
+
+.btn-play {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--white);
+  color: #000;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.btn-play:hover { transform: scale(1.07); background: var(--green-bright); }
+.btn-play:active { transform: scale(0.96); }
+
+/* Volume (mantém a lógica original) */
+.volume-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.btn-volume {
+  background: none;
+  border: none;
+  color: var(--text-soft);
+  cursor: pointer;
+  display: flex;
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+.btn-volume:hover { color: var(--white); }
+.volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+}
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--white);
+}
+.volume-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: var(--white);
+}
+
+/* Dica de scroll */
+.scroll-hint {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  letter-spacing: 0.5px;
+  animation: bob 2s ease-in-out infinite;
+}
+@keyframes bob {
+  0%, 100% { transform: translate(-50%, 0); }
+  50%      { transform: translate(-50%, 6px); }
+}
+
+/* ======================================================
+   TÍTULOS / TEXTOS DAS SEÇÕES
+   ====================================================== */
+.kicker {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--green-bright);
+  margin-bottom: 14px;
+}
+.section-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 28px;
+}
+
+/* SEÇÃO 2 — Mensagem em destaque */
+.section-love { text-align: center; }
+.section-love > .reveal { max-width: 560px; }
+.big-message {
+  font-size: clamp(1.8rem, 8vw, 2.8rem);
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--white);
+  letter-spacing: -0.5px;
+  text-wrap: balance;
+}
+
+/* SEÇÃO 3 — Contador */
+.section-counter { text-align: center; }
+.section-counter > .reveal { width: 100%; max-width: 560px; }
+.counter {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+.counter-box {
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+.counter-num {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--green-bright);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.counter-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+/* SEÇÃO 4 — Distância */
+.section-distance { text-align: center; }
+.section-distance > .reveal { width: 100%; max-width: 560px; }
+.route {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 28px 24px;
+  margin-bottom: 22px;
+}
+.city {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+.city-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--white);
+}
+.city-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--green-bright);
+  box-shadow: 0 0 14px rgba(30, 215, 96, 0.7);
+}
+.route-line { color: var(--text-soft); display: flex; }
+.distance-km {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 10px;
+}
+.distance-sub {
+  font-size: 1rem;
+  color: var(--text-soft);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+/* SEÇÃO 5 — Final */
+.section-final { text-align: center; }
+.section-final > .reveal { max-width: 580px; }
+.heart {
+  color: var(--green-bright);
+  display: flex;
+  justify-content: center;
+  margin-bottom: 22px;
+  animation: beat 1.6s ease-in-out infinite;
+}
+@keyframes beat {
+  0%, 100% { transform: scale(1); }
+  25%      { transform: scale(1.12); }
+  40%      { transform: scale(1); }
+}
+.final-text {
+  font-size: clamp(1.2rem, 5vw, 1.7rem);
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--white);
+  white-space: pre-line;
+  text-wrap: balance;
+  margin-bottom: 26px;
+}
+.signature {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--green-bright);
+  letter-spacing: 0.3px;
+}
+
+/* ======================================================
+   ANIMAÇÕES — FADE IN / SLIDE UP / SCROLL REVEAL
+   ====================================================== */
+.reveal {
+  opacity: 0;
+  transform: translateY(36px);
+  transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Hover suave nos cards (desktop) */
+@media (hover: hover) {
+  .counter-box, .route {
+    transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+  }
+  .counter-box:hover, .route:hover {
+    transform: translateY(-4px);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+}
+
+/* Utilitário */
+.hidden { display: none !important; }
+
+/* ======================================================
+   RESPONSIVIDADE (mobile-first)
+   ====================================================== */
+@media (min-width: 480px) {
+  .stage { width: 68%; }
+}
+@media (min-width: 768px) {
+  .section { padding: 64px 32px; }
+  .now-playing { max-width: 460px; }
+  .counter { grid-template-columns: repeat(4, 1fr); }
+}
+@media (min-width: 1024px) {
+  .now-playing { max-width: 480px; }
+  .section-title { font-size: 1.9rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+  .reveal { opacity: 1; transform: none; }
+}
